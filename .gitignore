@@ -1,0 +1,22 @@
+# Binaries
+bin/
+tmp/
+
+# IDE
+.vscode/
+.idea/
+
+# Go build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+
+# Env
+.env
+
+
