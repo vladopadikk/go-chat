@@ -19,7 +19,7 @@ func (h *Handler) RegisterHandler(ctx *gin.Context) {
 	var userIn UserInput
 
 	if err := ctx.ShouldBindJSON(&userIn); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
 		return
 	}
 

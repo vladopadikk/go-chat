@@ -12,8 +12,6 @@ import (
 
 var ErrEmailExists = errors.New("email is already regisrered")
 
-var ErrUserNotFound = errors.New("user not fount")
-
 type Service struct {
 	repo *Repository
 }
