@@ -15,12 +15,11 @@ type ChatMember struct {
 }
 
 type CreatePrivateChatInput struct {
-	UserID int64  `json:"name"`
-	Type   string `json:"type"`
+	UserID int64 `json:"user_id"`
 }
 
 type CreateGroupChatInput struct {
-	UserID       int64   `json:"name"`
+	Name         string  `json:"name"`
 	Participants []int64 `json:"participants"`
 }
 
