@@ -40,14 +40,14 @@ func (r *Repository) AddMember(ctx context.Context, exec Executor, chatID, userI
 	return err
 }
 
-func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]Chat, error) {
+func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]ChatResponse, error) {
 	query := `
 		SELECT c.id, c.type, c.created_at 
 		FROM chats c
 		JOIN chat_members cm ON cm.chat_id = c.id
 		WHERE cm.user_id = $1;
 	`
-	var chats []Chat
+	var chats []ChatResponse
 	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]Chat
 	defer rows.Close()
 
 	for rows.Next() {
-		var chat Chat
+		var chat ChatResponse
 		if err := rows.Scan(&chat.ID, &chat.Type, &chat.CreatedAt); err != nil {
 			return nil, err
 		}

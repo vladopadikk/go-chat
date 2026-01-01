@@ -41,5 +41,5 @@ func (h *Handler) LoginHandler(ctx *gin.Context) {
 }
 
 func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
-	router.POST("/register", handler.LoginHandler)
+	router.POST("/login", handler.LoginHandler)
 }

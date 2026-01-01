@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ErrEmailExists = errors.New("email is already regisrered")
+var ErrEmailExists = errors.New("email is already registered")
 
 type Service struct {
 	repo *Repository

@@ -28,3 +28,8 @@ type ChatResponse struct {
 	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type ChatListResponse struct {
+	UserID int64
+	Chats  []ChatResponse
+}

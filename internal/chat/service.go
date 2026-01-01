@@ -77,10 +77,10 @@ func (s *Service) CreateGroupChat(ctx context.Context, userID int64, createGroup
 	return chat, tx.Commit()
 }
 
-func (s *Service) GetChatsList(ctx context.Context, userID int64) ([]Chat, error) {
+func (s *Service) GetChatsList(ctx context.Context, userID int64) ([]ChatResponse, error) {
 	chatList, err := s.repo.GetChatsByUserID(ctx, userID)
 	if err != nil {
-		return []Chat{}, fmt.Errorf("db error: %w", err)
+		return []ChatResponse{}, fmt.Errorf("db error: %w", err)
 	}
 
 	return chatList, nil
