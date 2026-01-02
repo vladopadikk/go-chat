@@ -20,22 +20,31 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo}
 }
 
-func (s *Service) Register(ctx context.Context, user UserInput) (int64, error) {
-	u, err := s.repo.GetByEmail(ctx, user.Email)
+func (s *Service) Register(ctx context.Context, input UserInput) (UserResponse, error) {
+	_, err := s.repo.GetByEmail(ctx, input.Email)
 
-	if u != nil {
-		return 0, ErrEmailExists
+	if err == nil {
+		return UserResponse{}, ErrEmailExists
 	}
 
-	if err != nil && err != sql.ErrNoRows {
-		return 0, fmt.Errorf("failed to create user: %w", err)
+	if err != sql.ErrNoRows {
+		return UserResponse{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, err
+		return UserResponse{}, err
 	}
 	createdAt := time.Now()
 
-	return s.repo.Create(ctx, user.Username, user.Email, string(hashedPass), createdAt)
+	id, err := s.repo.Create(ctx, input.Username, input.Email, string(hashedPass), createdAt)
+	if err != nil {
+		return UserResponse{}, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return UserResponse{
+		ID:       id,
+		Username: input.Username,
+		Email:    input.Email,
+	}, nil
 }

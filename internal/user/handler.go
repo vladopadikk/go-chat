@@ -23,7 +23,7 @@ func (h *Handler) RegisterHandler(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.service.Register(ctx.Request.Context(), userIn)
+	user, err := h.service.Register(ctx.Request.Context(), userIn)
 	if err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -33,11 +33,7 @@ func (h *Handler) RegisterHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, UserResponse{
-		ID:       id,
-		Username: userIn.Username,
-		Email:    userIn.Email,
-	})
+	ctx.JSON(http.StatusCreated, user)
 }
 
 func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {

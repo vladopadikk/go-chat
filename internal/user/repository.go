@@ -32,7 +32,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 			WHERE email = $1; 
 	`
 
-	user := &User{}
+	var user User
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.Username,
@@ -41,9 +41,9 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 		&user.CreatedAt,
 	)
 
-	if err == sql.ErrNoRows {
-		return nil, nil
+	if err != nil {
+		return nil, err
 	}
 
-	return user, err
+	return &user, err
 }

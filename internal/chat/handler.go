@@ -39,11 +39,7 @@ func (h *Handler) CreatePrivateChatHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, ChatResponse{
-		ID:        chat.ID,
-		Type:      chat.Type,
-		CreatedAt: chat.CreatedAt,
-	})
+	ctx.JSON(http.StatusOK, chat)
 }
 
 func (h *Handler) CreateGroupChatHandler(ctx *gin.Context) {
@@ -66,11 +62,7 @@ func (h *Handler) CreateGroupChatHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, ChatResponse{
-		ID:        chat.ID,
-		Type:      chat.Type,
-		CreatedAt: chat.CreatedAt,
-	})
+	ctx.JSON(http.StatusOK, chat)
 }
 
 func (h *Handler) GetChatsHandler(ctx *gin.Context) {
@@ -86,10 +78,7 @@ func (h *Handler) GetChatsHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, ChatListResponse{
-		UserID: userID,
-		Chats:  chatList,
-	})
+	ctx.JSON(http.StatusOK, chatList)
 }
 
 func RegisterRoutes(r *gin.RouterGroup, h *Handler) {

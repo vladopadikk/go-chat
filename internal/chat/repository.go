@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/vladopadikk/go-chat/internal/database"
 )
 
 type Repository struct {
@@ -14,13 +16,7 @@ func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db}
 }
 
-type Executor interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
-}
-
-func (r *Repository) CreateChat(ctx context.Context, exec Executor, typ, name string) (Chat, error) {
+func (r *Repository) CreateChat(ctx context.Context, exec database.Executor, typ, name string) (Chat, error) {
 	query := `
 		INSERT INTO chats (type, name)
 		VALUES ($1, $2)
@@ -31,7 +27,7 @@ func (r *Repository) CreateChat(ctx context.Context, exec Executor, typ, name st
 	return chat, err
 }
 
-func (r *Repository) AddMember(ctx context.Context, exec Executor, chatID, userID int64, joinedAt time.Time) error {
+func (r *Repository) AddMember(ctx context.Context, exec database.Executor, chatID, userID int64, joinedAt time.Time) error {
 	query := `
 		INSERT INTO chat_members (chat_id, user_id, joined_at)
 		VALUES ($1, $2, $3)
@@ -76,4 +72,22 @@ func (r *Repository) FindPrivateChatBetweenUsers(ctx context.Context, userA, use
 	var chat Chat
 	err := r.db.QueryRowContext(ctx, query, userA, userB).Scan(&chat.ID, &chat.Type, &chat.CreatedAt)
 	return chat, err
+}
+
+func (r *Repository) IsUserInChat(ctx context.Context, chatID, userID int64) (bool, error) {
+	query := `
+		SELECT 1
+		FROM chat_members
+		WHERE chat_id = $1 AND user_id = $2
+		LIMIT 1;
+	`
+
+	err := r.db.QueryRowContext(ctx, query, chatID, userID).Scan()
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return true, nil
 }
