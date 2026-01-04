@@ -33,7 +33,7 @@ func (r *Repository) Create(ctx context.Context, exec database.Executor, msg Mes
 	return message, err
 }
 
-func (r *Repository) GetMsgByChatID(ctx context.Context, chatID int64, limit int, offset int) ([]MessageResponse, error) {
+func (r *Repository) GetMsgByChatID(ctx context.Context, exec database.Executor, chatID int64, limit int, offset int) ([]MessageResponse, error) {
 	query := `
 		SELECT m.id, m.chat_id, m.sender_id, m.content, m.created_at 
 		FROM messages m
@@ -41,7 +41,7 @@ func (r *Repository) GetMsgByChatID(ctx context.Context, chatID int64, limit int
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3;
 	`
-	rows, err := r.db.QueryContext(ctx, query, chatID, limit, offset)
+	rows, err := exec.QueryContext(ctx, query, chatID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

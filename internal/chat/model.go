@@ -30,6 +30,5 @@ type ChatResponse struct {
 }
 
 type ChatListResponse struct {
-	UserID int64
-	Chats  []ChatResponse
+	Chats []ChatResponse `json:"chats"`
 }

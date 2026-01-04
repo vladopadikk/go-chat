@@ -36,7 +36,7 @@ func (r *Repository) AddMember(ctx context.Context, exec database.Executor, chat
 	return err
 }
 
-func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]ChatResponse, error) {
+func (r *Repository) GetChatsByUserID(ctx context.Context, exec database.Executor, userID int64) ([]ChatResponse, error) {
 	query := `
 		SELECT c.id, c.type, c.created_at 
 		FROM chats c
@@ -44,7 +44,7 @@ func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]Chat
 		WHERE cm.user_id = $1;
 	`
 	var chats []ChatResponse
-	rows, err := r.db.QueryContext(ctx, query, userID)
+	rows, err := exec.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (r *Repository) GetChatsByUserID(ctx context.Context, userID int64) ([]Chat
 	return chats, err
 }
 
-func (r *Repository) FindPrivateChatBetweenUsers(ctx context.Context, userA, userB int64) (Chat, error) {
+func (r *Repository) FindPrivateChatBetweenUsers(ctx context.Context, exec database.Executor, userA, userB int64) (Chat, error) {
 	query := `
 		SELECT c.id, c.type, c.created_at
 		FROM chats c
@@ -70,24 +70,44 @@ func (r *Repository) FindPrivateChatBetweenUsers(ctx context.Context, userA, use
 		WHERE c.type = 'private' AND cm1.user_id = $1 AND cm2.user_id = $2;
 	`
 	var chat Chat
-	err := r.db.QueryRowContext(ctx, query, userA, userB).Scan(&chat.ID, &chat.Type, &chat.CreatedAt)
+	err := exec.QueryRowContext(ctx, query, userA, userB).Scan(&chat.ID, &chat.Type, &chat.CreatedAt)
 	return chat, err
 }
 
 func (r *Repository) IsUserInChat(ctx context.Context, chatID, userID int64) (bool, error) {
 	query := `
+        SELECT 1
+        FROM chat_members
+        WHERE chat_id = $1 AND user_id = $2
+        LIMIT 1;
+    `
+
+	var exists int
+	err := r.db.QueryRowContext(ctx, query, chatID, userID).Scan(&exists)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *Repository) ChatExists(ctx context.Context, chatID int64) (bool, error) {
+	query := `
 		SELECT 1
-		FROM chat_members
-		WHERE chat_id = $1 AND user_id = $2
+		FROM chats
+		WHERE id = $1
 		LIMIT 1;
 	`
 
-	err := r.db.QueryRowContext(ctx, query, chatID, userID).Scan()
-	if err != nil && err != sql.ErrNoRows {
+	var exists int
+	err := r.db.QueryRowContext(ctx, query, chatID).Scan(&exists)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
 		return false, err
-	}
-	if err == sql.ErrNoRows {
-		return false, nil
 	}
 	return true, nil
 }

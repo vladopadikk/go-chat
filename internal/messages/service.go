@@ -9,6 +9,7 @@ import (
 )
 
 var ErrForbidden = errors.New("user is not a member of the chat")
+var ErrChatNotFound = errors.New("chat not found")
 
 type Service struct {
 	repo     *Repository
@@ -22,13 +23,21 @@ func NewService(repo *Repository, chatRepo *chat.Repository) *Service {
 func (s *Service) SendMessage(ctx context.Context, senderID int64, input SendMessageInput) (Message, error) {
 	tx, err := s.repo.db.BeginTx(ctx, nil)
 	if err != nil {
-		return Message{}, fmt.Errorf("transaction error: %w", err)
+		return Message{}, err
 	}
 	defer tx.Rollback()
 
+	exists, err := s.chatRepo.ChatExists(ctx, input.ChatID)
+	if err != nil {
+		return Message{}, err
+	}
+	if !exists {
+		return Message{}, ErrChatNotFound
+	}
+
 	isMember, err := s.chatRepo.IsUserInChat(ctx, input.ChatID, senderID)
 	if err != nil {
-		return Message{}, fmt.Errorf("db error: %w", err)
+		return Message{}, err
 	}
 	if !isMember {
 		return Message{}, ErrForbidden
@@ -40,29 +49,31 @@ func (s *Service) SendMessage(ctx context.Context, senderID int64, input SendMes
 		Content:  input.Content,
 	})
 	if err != nil {
-		return Message{}, fmt.Errorf("db error: %w", err)
+		return Message{}, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return Message{}, fmt.Errorf("commit tx: %w", err)
+		return Message{}, err
 	}
 
 	return msg, nil
 }
 
-func (s *Service) GetMessage(ctx context.Context, chatID, userID int64, limit, offset int) ([]MessageResponse, error) {
+func (s *Service) GetMessages(ctx context.Context, chatID, userID int64, limit, offset int) (MessageListResponse, error) {
 	isMember, err := s.chatRepo.IsUserInChat(ctx, chatID, userID)
 	if err != nil {
-		return []MessageResponse{}, fmt.Errorf("db error: %w", err)
+		return MessageListResponse{}, fmt.Errorf("db error: %w", err)
 	}
 	if !isMember {
-		return []MessageResponse{}, ErrForbidden
+		return MessageListResponse{}, ErrForbidden
 	}
 
-	msgs, err := s.repo.GetMsgByChatID(ctx, chatID, limit, offset)
+	msgs, err := s.repo.GetMsgByChatID(ctx, s.repo.db, chatID, limit, offset)
 	if err != nil {
-		return []MessageResponse{}, fmt.Errorf("db error: %w", err)
+		return MessageListResponse{}, fmt.Errorf("db error: %w", err)
 	}
 
-	return msgs, nil
+	return MessageListResponse{
+		Messages: msgs,
+	}, nil
 }

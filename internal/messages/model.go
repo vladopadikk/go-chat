@@ -22,3 +22,7 @@ type MessageResponse struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type MessageListResponse struct {
+	Messages []MessageResponse `json:"messages"`
+}

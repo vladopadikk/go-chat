@@ -22,7 +22,7 @@ func (s *Service) CreatePrivateChat(ctx context.Context, userID int64, createPri
 	}
 	defer tx.Rollback()
 
-	chat, err := s.repo.FindPrivateChatBetweenUsers(ctx, userID, createPrivateChatIn.UserID)
+	chat, err := s.repo.FindPrivateChatBetweenUsers(ctx, s.repo.db, userID, createPrivateChatIn.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		return ChatResponse{}, fmt.Errorf("db error: %w", err)
 	}
@@ -32,17 +32,16 @@ func (s *Service) CreatePrivateChat(ctx context.Context, userID int64, createPri
 		if err != nil {
 			return ChatResponse{}, fmt.Errorf("db error: %w", err)
 		}
-	}
+		joinedAt := time.Now()
 
-	joinedAt := time.Now()
-
-	err = s.repo.AddMember(ctx, tx, chat.ID, userID, joinedAt)
-	if err != nil {
-		return ChatResponse{}, fmt.Errorf("db error: %w", err)
-	}
-	err = s.repo.AddMember(ctx, tx, chat.ID, createPrivateChatIn.UserID, joinedAt)
-	if err != nil {
-		return ChatResponse{}, fmt.Errorf("db error: %w", err)
+		err = s.repo.AddMember(ctx, tx, chat.ID, userID, joinedAt)
+		if err != nil {
+			return ChatResponse{}, fmt.Errorf("db error: %w", err)
+		}
+		err = s.repo.AddMember(ctx, tx, chat.ID, createPrivateChatIn.UserID, joinedAt)
+		if err != nil {
+			return ChatResponse{}, fmt.Errorf("db error: %w", err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -70,11 +69,6 @@ func (s *Service) CreateGroupChat(ctx context.Context, userID int64, createGroup
 
 	joinedAt := time.Now()
 
-	err = s.repo.AddMember(ctx, tx, chat.ID, userID, joinedAt)
-	if err != nil {
-		return ChatResponse{}, fmt.Errorf("db error: %w", err)
-	}
-
 	for _, participant := range createGroupChatIn.Participants {
 		err = s.repo.AddMember(ctx, tx, chat.ID, participant, joinedAt)
 		if err != nil {
@@ -94,13 +88,12 @@ func (s *Service) CreateGroupChat(ctx context.Context, userID int64, createGroup
 }
 
 func (s *Service) GetChatsList(ctx context.Context, userID int64) (ChatListResponse, error) {
-	chatList, err := s.repo.GetChatsByUserID(ctx, userID)
+	chatList, err := s.repo.GetChatsByUserID(ctx, s.repo.db, userID)
 	if err != nil {
 		return ChatListResponse{}, fmt.Errorf("db error: %w", err)
 	}
 
 	return ChatListResponse{
-		UserID: userID,
-		Chats:  chatList,
+		Chats: chatList,
 	}, nil
 }

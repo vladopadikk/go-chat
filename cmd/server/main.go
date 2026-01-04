@@ -6,7 +6,9 @@ import (
 	"github.com/vladopadikk/go-chat/internal/chat"
 	"github.com/vladopadikk/go-chat/internal/config"
 	"github.com/vladopadikk/go-chat/internal/database"
+	"github.com/vladopadikk/go-chat/internal/messages"
 	"github.com/vladopadikk/go-chat/internal/user"
+	"github.com/vladopadikk/go-chat/internal/ws"
 )
 
 func main() {
@@ -29,8 +31,16 @@ func main() {
 	chatService := chat.NewService(chatRepo)
 	chatHandler := chat.NewHandler(chatService)
 
-	api := router.Group("/api")
+	messageRepo := messages.NewRepository(db)
+	messageService := messages.NewService(messageRepo, chatRepo)
+	messageHandler := messages.NewHandler(messageService)
 
+	hub := ws.NewHub()
+	go hub.Run()
+
+	wsHandler := ws.NewHandler(hub, chatService, messageService)
+
+	api := router.Group("/api")
 	user.RegisterRoutes(api, userHandler)
 	auth.RegisterRoutes(api, authHandler)
 
@@ -38,6 +48,9 @@ func main() {
 	protected.Use(auth.AuthMiddleware(cfg.JWTSecret))
 
 	chat.RegisterRoutes(protected, chatHandler)
+	messages.RegisterRoutes(protected, messageHandler)
+
+	ws.RegisterRoutes(protected, wsHandler)
 
 	router.Run(":" + cfg.AppPort)
 
