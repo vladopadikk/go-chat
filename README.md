@@ -11,7 +11,6 @@ The project demonstrates clean architecture, WebSocket real-time messaging, and 
 * Private and group chats
 * Real-time messaging via WebSocket
 * Message history with pagination
-* Online users tracking
 * Clean architecture (handler / service / repository)
 * Protection against unauthorized access to chats
 
